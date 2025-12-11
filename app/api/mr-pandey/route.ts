@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateStrategy } from "@/lib/openrouter";
 import { Prospect } from "@/lib/types";
 
+// Mark route as dynamic
+export const dynamic = "force-dynamic";
+
 /**
  * POST /api/mr-pandey
  * Accepts prospect data and returns a 5-piece lead generation strategy

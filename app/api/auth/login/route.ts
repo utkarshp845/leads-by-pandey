@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, generateToken } from "@/lib/auth";
 import { findUserByEmail } from "@/lib/db";
 
+// Mark route as dynamic to allow cookie access
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -60,12 +63,22 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
     return response;
   } catch (error) {
     console.error("Login error:", error);
+    
+    // Handle JWT_SECRET configuration errors
+    if (error instanceof Error && error.message.includes("JWT_SECRET")) {
+      return NextResponse.json(
+        { error: "Server configuration error. Please contact support." },
+        { status: 500 }
+      );
+    }
+    
     return NextResponse.json(
       { error: "Failed to login. Please try again." },
       { status: 500 }

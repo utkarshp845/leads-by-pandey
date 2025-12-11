@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { createUser, findUserByEmail } from "@/lib/db";
 
+// Mark route as dynamic to allow cookie access
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -77,6 +80,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
+      path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
@@ -88,6 +92,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: error.message },
         { status: 409 }
+      );
+    }
+    
+    // Handle JWT_SECRET configuration errors
+    if (error instanceof Error && error.message.includes("JWT_SECRET")) {
+      return NextResponse.json(
+        { error: "Server configuration error. Please contact support." },
+        { status: 500 }
       );
     }
 

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 
+// Mark route as dynamic to allow cookie access
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   const response = NextResponse.json({ message: "Logged out successfully" });
   
@@ -8,6 +11,7 @@ export async function POST() {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
+    path: "/",
     maxAge: 0,
   });
 
