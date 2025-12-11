@@ -1,7 +1,7 @@
 "use client";
 
 import { SavedProspect } from "@/lib/types";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 interface ProspectListProps {
   prospects: SavedProspect[];
@@ -11,7 +11,7 @@ interface ProspectListProps {
   onDeleteProspect: (id: string) => void;
 }
 
-export default function ProspectList({
+function ProspectList({
   prospects,
   selectedProspectId,
   onSelectProspect,
@@ -46,7 +46,7 @@ export default function ProspectList({
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 h-full flex flex-col">
+    <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 h-full flex flex-col">
       {/* Header */}
       <div className="p-6 border-b border-gray-700">
         <div className="flex items-center justify-between mb-4">
@@ -172,4 +172,6 @@ export default function ProspectList({
     </div>
   );
 }
+
+export default memo(ProspectList);
 

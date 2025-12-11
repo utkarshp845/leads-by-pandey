@@ -2,6 +2,7 @@
 
 import { StrategyResponse } from "@/lib/types";
 import { formatStrategyContent } from "@/lib/formatStrategy";
+import { memo } from "react";
 
 interface StrategyPanelProps {
   strategy: StrategyResponse | null;
@@ -11,7 +12,7 @@ interface StrategyPanelProps {
   onRegenerate?: () => void;
 }
 
-export default function StrategyPanel({
+function StrategyPanel({
   strategy,
   strategyGeneratedAt,
   isLoading,
@@ -21,7 +22,7 @@ export default function StrategyPanel({
   // Initial placeholder state
   if (!strategy && !isLoading && !error) {
     return (
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8 h-full flex items-center justify-center">
+      <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-8 h-full flex items-center justify-center">
         <div className="text-center max-w-md">
           <div className="mb-4">
             <svg className="mx-auto h-16 w-16 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -42,7 +43,7 @@ export default function StrategyPanel({
   // Loading state
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8 h-full flex items-center justify-center">
+      <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-8 h-full flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-yellow-500 mb-6"></div>
           <p className="text-yellow-500 text-lg font-medium">Mr. Pandey is analyzing...</p>
@@ -137,7 +138,7 @@ export default function StrategyPanel({
     };
 
     return (
-      <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8 h-full overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-6 lg:p-8 h-full overflow-y-auto">
         {/* Header */}
         <div className="mb-8 pb-6 border-b border-gray-700">
           <div className="flex items-center gap-3 mb-3">
@@ -287,4 +288,6 @@ export default function StrategyPanel({
 
   return null;
 }
+
+export default memo(StrategyPanel);
 

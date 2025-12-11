@@ -1,7 +1,7 @@
 "use client";
 
 import { Prospect } from "@/lib/types";
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 
 interface ProspectFormProps {
   prospect: Prospect;
@@ -12,7 +12,7 @@ interface ProspectFormProps {
   isLoading: boolean;
 }
 
-export default function ProspectForm({
+function ProspectForm({
   prospect,
   prospectId,
   onProspectChange,
@@ -52,7 +52,7 @@ export default function ProspectForm({
   };
 
   return (
-    <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8 h-full flex flex-col">
+    <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-6 lg:p-8 h-full flex flex-col">
       <div className="mb-8 pb-6 border-b border-gray-700">
         <div className="flex items-center gap-3 mb-3">
           <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-md shadow-yellow-500/50">
@@ -264,4 +264,6 @@ export default function ProspectForm({
     </div>
   );
 }
+
+export default memo(ProspectForm);
 

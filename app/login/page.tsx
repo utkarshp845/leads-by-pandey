@@ -36,16 +36,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-lg border border-gray-700 p-8">
+        <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-700/50 p-8 lg:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex h-16 w-16 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 items-center justify-center shadow-lg shadow-yellow-500/50 mb-4">
-              <span className="text-black font-bold text-2xl">PS</span>
+              <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
             </div>
-            <h1 className="text-3xl font-bold text-yellow-500 mb-2">Welcome Back</h1>
-            <p className="text-gray-300">Sign in to your account</p>
+            <h1 className="text-4xl font-bold text-yellow-500 mb-1 leading-tight">Leads</h1>
+            <p className="text-sm text-gray-400 font-medium mb-4">by Pandey</p>
+            <h2 className="text-xl font-semibold text-gray-200 mb-2">Welcome Back</h2>
+            <p className="text-gray-400 text-sm">Sign in to your account</p>
           </div>
 
           {/* Error Message */}

@@ -4,8 +4,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "Pandey Solutions - AI Sales Mentor",
-  description: "Get strategic lead generation advice from Mr. Pandey",
+  title: "Leads By Pandey - AI-Powered Lead Generation Strategies",
+  description: "Generate personalized lead generation strategies with AI-powered insights from Mr. Pandey",
 };
 
 export const viewport: Viewport = {

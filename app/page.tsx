@@ -339,9 +339,16 @@ export default function Home() {
   // NOW we can do conditional returns - all hooks are called
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-yellow-500 mb-4"></div>
+          <div className="inline-flex items-center justify-center mb-4">
+            <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-500/20">
+              <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+          </div>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-800 border-t-yellow-500 mb-4"></div>
           <p className="text-gray-300 font-medium">Loading...</p>
         </div>
       </div>
@@ -353,38 +360,43 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900 p-4 md:p-8">
+    <main className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black p-4 md:p-6 lg:p-8">
       <div className="max-w-[1920px] mx-auto">
         {/* Header */}
-        <div className="mb-6">
+        <div className="mb-6 lg:mb-8">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50">
-                <span className="text-black font-bold text-xl">PS</span>
+              <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-500/20">
+                <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
               </div>
               <div>
-                <h1 className="text-3xl md:text-4xl font-bold text-yellow-500 mb-1">
-                  Pandey Solutions
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-yellow-500 mb-0.5 leading-tight tracking-tight">
+                  Leads
                 </h1>
-                <p className="text-gray-300 text-base md:text-lg">
-                  AI-powered lead generation strategy with Mr. Pandey
+                <p className="text-sm md:text-base text-gray-400 font-medium -mt-1 tracking-wide">
+                  by Pandey
+                </p>
+                <p className="text-gray-400 text-xs md:text-sm mt-2 font-light">
+                  AI-powered lead generation strategies
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {isSaving && (
-                <div className="flex items-center gap-2 text-sm text-gray-400">
-                  <div className="h-3 w-3 border-2 border-gray-700 border-t-yellow-500 rounded-full animate-spin"></div>
+                <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                  <div className="h-3 w-3 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
                   <span>Saving...</span>
                 </div>
               )}
-              <div className="text-right hidden sm:block">
+              <div className="text-right hidden sm:block bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700">
                 <p className="text-sm font-semibold text-yellow-500">{user.name}</p>
                 <p className="text-xs text-gray-400 truncate max-w-[150px]">{user.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800 rounded-lg transition-colors whitespace-nowrap border border-gray-700"
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800 rounded-lg transition-all whitespace-nowrap border border-gray-700 hover:border-yellow-500/50"
                 aria-label="Logout"
               >
                 Logout
@@ -394,7 +406,7 @@ export default function Home() {
         </div>
 
         {/* Main Content - 3 Panel Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[calc(100vh-10rem)]">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 h-[calc(100vh-10rem)] lg:h-[calc(100vh-12rem)]">
           {/* Left Panel - Prospect List (Sidebar) */}
           <div className="lg:col-span-3 h-full min-h-[300px] lg:min-h-0">
             <ProspectList
