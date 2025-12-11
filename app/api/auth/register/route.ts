@@ -49,17 +49,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Hash password and create user
     const passwordHash = await hashPassword(password);
-    const userWithPassword = createUser(email, name, passwordHash);
+    const userWithPassword = createUser(normalizedEmail, name.trim(), passwordHash);
+
+    console.log(`User registered successfully: ${userWithPassword.email}`);
 
     // Generate token
-    const token = generateToken({
-      id: userWithPassword.id,
-      email: userWithPassword.email,
-      name: userWithPassword.name,
-      createdAt: userWithPassword.createdAt,
-    });
+    let token: string;
+    try {
+      token = generateToken({
+        id: userWithPassword.id,
+        email: userWithPassword.email,
+        name: userWithPassword.name,
+        createdAt: userWithPassword.createdAt,
+      });
+    } catch (tokenError) {
+      console.error("Token generation error:", tokenError);
+      // If token generation fails, still create the user but return error
+      throw tokenError;
+    }
 
     // Return user (without password) and token
     const response = NextResponse.json(
@@ -97,8 +109,12 @@ export async function POST(request: NextRequest) {
     
     // Handle JWT_SECRET configuration errors
     if (error instanceof Error && error.message.includes("JWT_SECRET")) {
+      console.error("JWT_SECRET configuration error:", error.message);
       return NextResponse.json(
-        { error: "Server configuration error. Please contact support." },
+        { 
+          error: "Server configuration error. JWT_SECRET is not set. Please configure it in your environment variables.",
+          details: process.env.NODE_ENV !== "production" ? error.message : undefined
+        },
         { status: 500 }
       );
     }

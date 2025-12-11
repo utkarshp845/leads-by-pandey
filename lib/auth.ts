@@ -3,8 +3,14 @@ import bcrypt from "bcryptjs";
 import { User, UserWithPassword } from "./types";
 
 // In production, this MUST be set via environment variable
-const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === "production" ? "" : "dev-secret-key-change-in-production");
+// For development, use a default secret if not provided
+const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key-change-in-production-do-not-use-in-production";
 const JWT_EXPIRES_IN = "7d";
+
+// Warn if using default secret in production
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+  console.error("⚠️  WARNING: JWT_SECRET is not set in production! Authentication will fail.");
+}
 
 /**
  * Hash a password
@@ -27,8 +33,11 @@ export async function verifyPassword(
  * Generate a JWT token for a user
  */
 export function generateToken(user: User): string {
-  if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not configured");
+  if (!JWT_SECRET || JWT_SECRET === "") {
+    const errorMsg = process.env.NODE_ENV === "production" 
+      ? "JWT_SECRET environment variable is not set. Please configure it in your deployment settings."
+      : "JWT_SECRET is not configured. Please set it in your .env file.";
+    throw new Error(errorMsg);
   }
   
   return jwt.sign(

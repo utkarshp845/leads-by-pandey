@@ -18,9 +18,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalize email
+    const normalizedEmail = email.toLowerCase().trim();
+
     // Find user
-    const user = findUserByEmail(email);
+    const user = findUserByEmail(normalizedEmail);
     if (!user) {
+      console.log(`Login attempt failed: User not found for email: ${normalizedEmail}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
@@ -30,11 +34,14 @@ export async function POST(request: NextRequest) {
     // Verify password
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
+      console.log(`Login attempt failed: Invalid password for email: ${normalizedEmail}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
       );
     }
+
+    console.log(`Login successful for user: ${user.email}`);
 
     // Generate token
     const token = generateToken({

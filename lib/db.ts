@@ -30,14 +30,25 @@ if (typeof window === "undefined") {
  * Load all users from file
  */
 export function loadUsers(): UserWithPassword[] {
-  ensureDataDir();
+  try {
+    ensureDataDir();
+  } catch (error) {
+    console.error("Failed to ensure data directory exists:", error);
+    return [];
+  }
   
   if (!fs.existsSync(USERS_FILE)) {
+    // File doesn't exist yet, return empty array (first run)
     return [];
   }
 
   try {
     const data = fs.readFileSync(USERS_FILE, "utf-8");
+    if (!data || data.trim() === "") {
+      // Empty file, return empty array
+      return [];
+    }
+    
     const users = JSON.parse(data);
     
     // Validate structure
@@ -57,10 +68,18 @@ export function loadUsers(): UserWithPassword[] {
  * Save users to file
  */
 export function saveUsers(users: UserWithPassword[]): void {
-  ensureDataDir();
+  try {
+    ensureDataDir();
+  } catch (error) {
+    console.error("Failed to ensure data directory exists:", error);
+    throw new Error("Failed to create data directory");
+  }
   
   try {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+    // Write atomically using a temp file then rename (safer)
+    const tempFile = `${USERS_FILE}.tmp`;
+    fs.writeFileSync(tempFile, JSON.stringify(users, null, 2), "utf-8");
+    fs.renameSync(tempFile, USERS_FILE);
   } catch (error) {
     console.error("Error saving users:", error);
     throw error;
