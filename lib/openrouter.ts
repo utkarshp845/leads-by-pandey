@@ -191,11 +191,16 @@ export async function generateStrategy(
 ): Promise<StrategyResponse> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   
-  if (!apiKey) {
+  if (!apiKey || apiKey.trim() === "") {
+    console.error("❌ OPENROUTER_API_KEY is not set!");
+    console.error("   Please set OPENROUTER_API_KEY in your .env file or environment variables.");
+    console.error("   Get your API key at: https://openrouter.ai/keys");
     throw new Error(
-      "OPENROUTER_API_KEY is not set. Please add it to your .env file."
+      "OPENROUTER_API_KEY is not set. Please add it to your .env file or environment variables. Get your API key at https://openrouter.ai/keys"
     );
   }
+  
+  console.log("✓ OPENROUTER_API_KEY is set (length: " + apiKey.length + ")");
   
   const userPrompt = buildUserPrompt(prospect);
   

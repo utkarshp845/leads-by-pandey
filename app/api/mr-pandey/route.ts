@@ -61,8 +61,12 @@ export async function POST(request: NextRequest) {
     // Return user-friendly error messages
     if (error instanceof Error) {
       if (error.message.includes("OPENROUTER_API_KEY")) {
+        console.error("❌ OpenRouter API Key Error:", error.message);
         return NextResponse.json(
-          { error: "API configuration error. Please check your environment setup." },
+          { 
+            error: "OpenRouter API key is not configured. Please set OPENROUTER_API_KEY in your environment variables. Get your API key at https://openrouter.ai/keys",
+            details: process.env.NODE_ENV !== "production" ? error.message : undefined
+          },
           { status: 500 }
         );
       }
