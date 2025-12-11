@@ -56,7 +56,7 @@ git push origin main
    - Click **"Save and deploy"**
    - Wait 5-10 minutes for the first build
 
-### Step 3: Connect Your Domain
+### Step 3: Connect Your Domain (You already have Route53 & ACM!)
 
 1. **After deployment completes:**
    - Go to your app in Amplify Console
@@ -69,17 +69,20 @@ git push origin main
 
 3. **Select Certificate:**
    - Choose your ACM certificate from the dropdown
+   - ⚠️ **Important**: Certificate must be in **us-east-1** region for CloudFront
+   - If not showing, you may need to request a new certificate in us-east-1
    - It should show as verified ✅
 
 4. **DNS Configuration:**
-   - Amplify will show DNS records
-   - Since you're using Route53, Amplify can auto-configure:
-     - Look for **"Verify"** or **"Auto-configure"** button
-     - Or manually add the CNAME record shown in Route53
+   - Amplify will show DNS records (usually a CNAME)
+   - **Option A**: If you see **"Auto-configure Route53"** button, click it
+   - **Option B**: Manually add the CNAME record shown to your Route53 hosted zone
+   - Update the existing Route53 entry if needed
 
 5. **Wait for SSL:**
    - SSL certificate will be automatically provisioned
    - Takes 5-10 minutes
+   - Status will show: "Provisioning" → "Available"
 
 ### Step 4: Verify
 
