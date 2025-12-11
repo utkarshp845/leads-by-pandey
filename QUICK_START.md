@@ -25,9 +25,13 @@ git push origin main
    - Select repository: **`utkarshp845/leads-by-pandey`**
    - Select branch: **`main`** (or `master`)
 
-3. **Configure Build Settings**
-   - Amplify should auto-detect Next.js
-   - It will use the `amplify.yml` file from your repo
+3. **Configure Build Settings** ⚠️ IMPORTANT
+   - Click **"Edit"** next to build settings (don't rely on auto-detection)
+   - **Pre-build commands:** `npm ci`
+   - **Build commands:** `npm run build`
+   - **Output directory:** `.next`
+   - **Base directory:** (leave empty)
+   - Or paste the YAML from `amplify.yml` if there's a YAML editor option
    - Click **"Next"**
 
 4. **Add Environment Variables** ⚠️ IMPORTANT
