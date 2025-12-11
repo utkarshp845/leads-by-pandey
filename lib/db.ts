@@ -112,21 +112,31 @@ export function createUser(
 ): UserWithPassword {
   const users = loadUsers();
   
+  // Normalize email
+  const normalizedEmail = email.toLowerCase().trim();
+  
   // Check if user already exists
-  if (findUserByEmail(email)) {
+  if (findUserByEmail(normalizedEmail)) {
     throw new Error("User with this email already exists");
   }
 
   const newUser: UserWithPassword = {
     id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-    email: email.toLowerCase(),
-    name,
+    email: normalizedEmail,
+    name: name.trim(),
     passwordHash,
     createdAt: Date.now(),
   };
 
   users.push(newUser);
-  saveUsers(users);
+  
+  try {
+    saveUsers(users);
+    console.log(`User created successfully: ${newUser.email} (ID: ${newUser.id})`);
+  } catch (error) {
+    console.error("Failed to save user:", error);
+    throw new Error("Failed to save user. Please try again.");
+  }
 
   return newUser;
 }

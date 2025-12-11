@@ -41,22 +41,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    if (findUserByEmail(email)) {
+    // Normalize email first
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists (using normalized email)
+    if (findUserByEmail(normalizedEmail)) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 409 }
       );
     }
 
-    // Normalize email
-    const normalizedEmail = email.toLowerCase().trim();
-
     // Hash password and create user
-    const passwordHash = await hashPassword(password);
-    const userWithPassword = createUser(normalizedEmail, name.trim(), passwordHash);
+    let passwordHash: string;
+    try {
+      passwordHash = await hashPassword(password);
+      console.log("Password hashed successfully");
+    } catch (error) {
+      console.error("Password hashing error:", error);
+      throw new Error("Failed to process password");
+    }
 
-    console.log(`User registered successfully: ${userWithPassword.email}`);
+    let userWithPassword: ReturnType<typeof createUser>;
+    try {
+      userWithPassword = createUser(normalizedEmail, name.trim(), passwordHash);
+      console.log(`User created in database: ${userWithPassword.email} (ID: ${userWithPassword.id})`);
+    } catch (error) {
+      console.error("User creation error:", error);
+      if (error instanceof Error && error.message.includes("already exists")) {
+        throw error;
+      }
+      throw new Error("Failed to create user account");
+    }
 
     // Generate token
     let token: string;

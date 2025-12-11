@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, generateToken } from "@/lib/auth";
-import { findUserByEmail } from "@/lib/db";
+import { findUserByEmail, loadUsers } from "@/lib/db";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
@@ -24,24 +24,40 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = findUserByEmail(normalizedEmail);
     if (!user) {
-      console.log(`Login attempt failed: User not found for email: ${normalizedEmail}`);
+      console.log(`❌ Login failed: User not found for email: ${normalizedEmail}`);
+      console.log(`   Available users: ${loadUsers().map(u => u.email).join(", ") || "none"}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
       );
     }
+
+    console.log(`✓ User found: ${user.email} (ID: ${user.id})`);
+    console.log(`   Password hash exists: ${!!user.passwordHash}`);
+    console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
 
     // Verify password
-    const isValid = await verifyPassword(password, user.passwordHash);
+    let isValid: boolean;
+    try {
+      isValid = await verifyPassword(password, user.passwordHash);
+      console.log(`   Password verification: ${isValid ? "✓ Valid" : "✗ Invalid"}`);
+    } catch (error) {
+      console.error("Password verification error:", error);
+      return NextResponse.json(
+        { error: "Failed to verify password. Please try again." },
+        { status: 500 }
+      );
+    }
+
     if (!isValid) {
-      console.log(`Login attempt failed: Invalid password for email: ${normalizedEmail}`);
+      console.log(`❌ Login failed: Invalid password for email: ${normalizedEmail}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
       );
     }
 
-    console.log(`Login successful for user: ${user.email}`);
+    console.log(`✅ Login successful for user: ${user.email}`);
 
     // Generate token
     const token = generateToken({
