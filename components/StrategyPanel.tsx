@@ -138,7 +138,7 @@ function StrategyPanel({
     };
 
     return (
-      <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-6 lg:p-8 h-full overflow-y-auto">
+      <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-lg border border-gray-700/50 p-6 lg:p-8 h-full overflow-y-auto">
         {/* Header */}
         <div className="mb-8 pb-6 border-b border-gray-700">
           <div className="flex items-center gap-3 mb-3">

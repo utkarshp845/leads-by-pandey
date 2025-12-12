@@ -25,18 +25,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = async () => {
     try {
+      // Try to get token from localStorage first
+      const storedToken = typeof window !== "undefined" ? localStorage.getItem("auth-token") : null;
+      
+      // Make request with credentials to include cookies, and token in header if available
+      const headers: HeadersInit = {
+        "Content-Type": "application/json",
+      };
+      
+      if (storedToken) {
+        headers["Authorization"] = `Bearer ${storedToken}`;
+      }
+      
       const response = await fetch("/api/auth/me", {
         credentials: "include",
+        headers,
       });
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        // Update stored token if we got a new one
+        if (data.token && typeof window !== "undefined") {
+          localStorage.setItem("auth-token", data.token);
+        }
       } else {
+        // Clear invalid token
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth-token");
+        }
         setUser(null);
       }
     } catch (error) {
       console.error("Error checking auth:", error);
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("auth-token");
+      }
       setUser(null);
     } finally {
       setLoading(false);
@@ -60,9 +84,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     setUser(data.user);
-    // Store token in sessionStorage for API calls (workaround for httpOnly cookies)
+    // Store token in localStorage for persistent sessions and API calls
     if (data.token) {
-      sessionStorage.setItem("auth-token", data.token);
+      localStorage.setItem("auth-token", data.token);
     }
   };
 
@@ -83,9 +107,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const data = await response.json();
     setUser(data.user);
-    // Store token in sessionStorage for API calls (workaround for httpOnly cookies)
+    // Store token in localStorage for persistent sessions and API calls
     if (data.token) {
-      sessionStorage.setItem("auth-token", data.token);
+      localStorage.setItem("auth-token", data.token);
     }
   };
 
@@ -94,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: "POST",
       credentials: "include",
     });
-    sessionStorage.removeItem("auth-token");
+    localStorage.removeItem("auth-token");
     setUser(null);
   };
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateStrategy } from "@/lib/openrouter";
+import { getUserFromRequest } from "@/lib/auth";
 import { Prospect } from "@/lib/types";
 
 // Mark route as dynamic
@@ -11,6 +12,27 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const authHeader = request.headers.get("authorization");
+    const cookieToken = request.cookies.get("auth-token")?.value;
+    const token = authHeader?.replace("Bearer ", "") || cookieToken;
+    
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required. Please log in again." },
+        { status: 401 }
+      );
+    }
+    
+    const user = getUserFromRequest(authHeader || `Bearer ${token}`);
+    
+    if (!user) {
+      return NextResponse.json(
+        { error: "Invalid or expired session. Please log in again." },
+        { status: 401 }
+      );
+    }
+    
     // Rate limiting check (basic - can be enhanced with Redis in production)
     // For now, we'll rely on OpenRouter's rate limiting
     
@@ -61,7 +83,7 @@ export async function POST(request: NextRequest) {
     // Return user-friendly error messages
     if (error instanceof Error) {
       if (error.message.includes("OPENROUTER_API_KEY")) {
-        console.error("❌ OpenRouter API Key Error:", error.message);
+        console.error("ERROR: OpenRouter API Key Error:", error.message);
         return NextResponse.json(
           { 
             error: "OpenRouter API key is not configured. Please set OPENROUTER_API_KEY in your environment variables. Get your API key at https://openrouter.ai/keys",

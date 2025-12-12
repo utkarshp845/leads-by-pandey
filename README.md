@@ -1,6 +1,6 @@
-# Pandey Solutions - AI Sales Mentor
+# Leads by Pandey
 
-A professional lead generation strategy tool powered by AI. Get personalized 5-piece strategies for your prospects with Mr. Pandey, your AI sales mentor.
+A professional lead generation strategy tool powered by AI. Generate personalized 5-piece strategies for your prospects with Mr. Pandey, your AI sales mentor.
 
 ## Features
 
@@ -44,18 +44,14 @@ cd Leads
 npm install
 ```
 
-3. Create a `.env` file in the root directory:
-```bash
-cp .env.example .env
-```
-
-4. Add your environment variables:
+3. Create a `.env` file in the root directory with:
 ```env
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 JWT_SECRET=your_strong_random_secret_here
+NODE_ENV=development
 ```
 
-**Important**: For production, generate a strong JWT secret:
+**Generate JWT secret:**
 ```bash
 openssl rand -base64 32
 ```

@@ -192,7 +192,7 @@ export async function generateStrategy(
   const apiKey = process.env.OPENROUTER_API_KEY;
   
   if (!apiKey || apiKey.trim() === "") {
-    console.error("❌ OPENROUTER_API_KEY is not set!");
+    console.error("ERROR: OPENROUTER_API_KEY is not set!");
     console.error("   Please set OPENROUTER_API_KEY in your .env file or environment variables.");
     console.error("   Get your API key at: https://openrouter.ai/keys");
     throw new Error(
@@ -200,7 +200,18 @@ export async function generateStrategy(
     );
   }
   
-  console.log("✓ OPENROUTER_API_KEY is set (length: " + apiKey.length + ")");
+  // Check if API key is still the placeholder value
+  if (apiKey.includes('your_openrouter_api_key_here') || apiKey.includes('your_api_key_here') || apiKey.trim().length < 20) {
+    console.error("ERROR: OPENROUTER_API_KEY appears to be a placeholder or invalid!");
+    console.error("   Current value: " + apiKey.substring(0, 20) + "...");
+    console.error("   Please set a valid OPENROUTER_API_KEY in your .env file.");
+    console.error("   Get your API key at: https://openrouter.ai/keys");
+    throw new Error(
+      "OPENROUTER_API_KEY is not configured. Please set a valid API key in your .env file. Get your API key at https://openrouter.ai/keys"
+    );
+  }
+  
+  console.log("OPENROUTER_API_KEY is set (length: " + apiKey.length + ")");
   
   const userPrompt = buildUserPrompt(prospect);
   
@@ -238,8 +249,17 @@ export async function generateStrategy(
         error: { message: `HTTP ${response.status}: ${response.statusText}` },
       }));
       
+      const errorMessage = errorData.error?.message || `API request failed with status ${response.status}`;
+      
+      // If the error mentions auth/cookie, provide a more helpful message
+      if (typeof errorMessage === 'string' && (errorMessage.toLowerCase().includes('auth') || errorMessage.toLowerCase().includes('cookie') || errorMessage.toLowerCase().includes('credential'))) {
+        throw new Error(
+          `OpenRouter API authentication error: ${errorMessage}. Please check your OPENROUTER_API_KEY in the .env file.`
+        );
+      }
+      
       throw new Error(
-        errorData.error?.message || `API request failed with status ${response.status}`
+        typeof errorMessage === 'string' ? errorMessage : `API request failed with status ${response.status}`
       );
     }
     

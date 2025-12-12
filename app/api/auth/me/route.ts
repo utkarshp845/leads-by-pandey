@@ -7,11 +7,13 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from cookie or header
-    const token = request.cookies.get("auth-token")?.value || 
-                  request.headers.get("authorization")?.replace("Bearer ", "");
+    // Get token from cookie or header (prefer header for client-side tokens)
+    const authHeader = request.headers.get("authorization");
+    const cookieToken = request.cookies.get("auth-token")?.value;
+    const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
     if (!token) {
+      console.log("ERROR: /api/auth/me: No token found");
       return NextResponse.json(
         { error: "Not authenticated" },
         { status: 401 }
@@ -21,6 +23,7 @@ export async function GET(request: NextRequest) {
     // Verify token
     const decoded = verifyToken(token);
     if (!decoded) {
+      console.log("ERROR: /api/auth/me: Invalid token");
       return NextResponse.json(
         { error: "Invalid token" },
         { status: 401 }
@@ -30,11 +33,14 @@ export async function GET(request: NextRequest) {
     // Get user
     const user = findUserById(decoded.userId);
     if (!user) {
+      console.log(`ERROR: /api/auth/me: User not found for ID: ${decoded.userId}`);
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
+
+    console.log(`/api/auth/me: Authenticated user: ${user.email}`);
 
     // Return user without password
     return NextResponse.json({

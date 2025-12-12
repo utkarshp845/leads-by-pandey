@@ -90,8 +90,25 @@ export function saveUsers(users: UserWithPassword[]): void {
  * Find user by email
  */
 export function findUserByEmail(email: string): UserWithPassword | null {
+  try {
+    ensureDataDir();
+  } catch (error) {
+    console.error("Failed to ensure data directory exists:", error);
+    return null;
+  }
+  
   const users = loadUsers();
-  return users.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = users.find((u) => u.email.toLowerCase() === normalizedEmail) || null;
+  
+  if (user) {
+    console.log(`User found by email: ${user.email} (ID: ${user.id})`);
+  } else {
+    console.log(`✗ User not found by email: ${normalizedEmail}`);
+    console.log(`  Available users: ${users.map(u => u.email).join(", ") || "none"}`);
+  }
+  
+  return user;
 }
 
 /**
@@ -110,6 +127,13 @@ export function createUser(
   name: string,
   passwordHash: string
 ): UserWithPassword {
+  try {
+    ensureDataDir();
+  } catch (error) {
+    console.error("Failed to ensure data directory exists:", error);
+    throw new Error("Failed to initialize data storage");
+  }
+  
   const users = loadUsers();
   
   // Normalize email
@@ -133,8 +157,20 @@ export function createUser(
   try {
     saveUsers(users);
     console.log(`User created successfully: ${newUser.email} (ID: ${newUser.id})`);
+    console.log(`   Total users in database: ${users.length}`);
+    
+    // Verify the user was saved
+    const verifyUser = findUserByEmail(normalizedEmail);
+    if (!verifyUser) {
+      console.error("ERROR: User was not found after creation - save may have failed");
+      throw new Error("User creation verification failed");
+    }
+    console.log(`User verification successful: ${verifyUser.email}`);
   } catch (error) {
     console.error("Failed to save user:", error);
+    if (error instanceof Error) {
+      throw error;
+    }
     throw new Error("Failed to save user. Please try again.");
   }
 

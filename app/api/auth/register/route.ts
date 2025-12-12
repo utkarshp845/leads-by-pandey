@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie for server-side access
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
+    console.log(`Cookie set for new user: ${userWithPassword.email}`);
     return response;
   } catch (error) {
     console.error("Registration error:", error);

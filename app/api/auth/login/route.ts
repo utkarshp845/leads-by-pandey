@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = findUserByEmail(normalizedEmail);
     if (!user) {
-      console.log(`❌ Login failed: User not found for email: ${normalizedEmail}`);
+      console.log(`ERROR: Login failed: User not found for email: ${normalizedEmail}`);
       console.log(`   Available users: ${loadUsers().map(u => u.email).join(", ") || "none"}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`✓ User found: ${user.email} (ID: ${user.id})`);
+    console.log(`User found: ${user.email} (ID: ${user.id})`);
     console.log(`   Password hash exists: ${!!user.passwordHash}`);
     console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     let isValid: boolean;
     try {
       isValid = await verifyPassword(password, user.passwordHash);
-      console.log(`   Password verification: ${isValid ? "✓ Valid" : "✗ Invalid"}`);
+      console.log(`   Password verification: ${isValid ? "Valid" : "Invalid"}`);
     } catch (error) {
       console.error("Password verification error:", error);
       return NextResponse.json(
@@ -50,14 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isValid) {
-      console.log(`❌ Login failed: Invalid password for email: ${normalizedEmail}`);
+      console.log(`ERROR: Login failed: Invalid password for email: ${normalizedEmail}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
       );
     }
 
-    console.log(`✅ Login successful for user: ${user.email}`);
+    console.log(`Login successful for user: ${user.email}`);
 
     // Generate token
     const token = generateToken({
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
 
-    // Set httpOnly cookie
+    // Set httpOnly cookie for server-side access
     response.cookies.set("auth-token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
+    console.log(`Cookie set for user: ${user.email}`);
     return response;
   } catch (error) {
     console.error("Login error:", error);
