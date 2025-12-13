@@ -9,7 +9,7 @@ const JWT_EXPIRES_IN = "7d";
 
 // Warn if using default secret in production
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-  console.error("⚠️  WARNING: JWT_SECRET is not set in production! Authentication will fail.");
+  console.error("WARNING: JWT_SECRET is not set in production! Authentication will fail.");
 }
 
 /**

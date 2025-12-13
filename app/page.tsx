@@ -28,6 +28,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [activeTab, setActiveTab] = useState<"strategy" | "prospects">("strategy");
 
   // Memoized functions to prevent unnecessary re-renders
   const getAuthToken = useCallback(async (): Promise<string> => {
@@ -35,10 +36,11 @@ export default function Home() {
       throw new Error("Not authenticated");
     }
     
-    // Try sessionStorage first (faster)
-    const sessionToken = sessionStorage.getItem("auth-token");
-    if (sessionToken) {
-      return sessionToken;
+    // Try localStorage first (persistent across sessions)
+    const storedToken = localStorage.getItem("auth-token");
+    
+    if (storedToken) {
+      return storedToken;
     }
     
     // Fallback: get from API (handles httpOnly cookies)
@@ -50,11 +52,12 @@ export default function Home() {
       if (response.ok) {
         const data = await response.json();
         if (data.token) {
-          sessionStorage.setItem("auth-token", data.token);
+          localStorage.setItem("auth-token", data.token);
           return data.token;
         }
       } else if (response.status === 401) {
-        // Token expired, redirect to login
+        // Token expired, clear and redirect to login
+        localStorage.removeItem("auth-token");
         router.push("/login");
         throw new Error("Session expired");
       }
@@ -181,7 +184,7 @@ export default function Home() {
   const handleLogout = useCallback(async () => {
     await logout();
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("auth-token");
+      localStorage.removeItem("auth-token");
     }
     router.push("/login");
   }, [logout, router]);
@@ -252,11 +255,15 @@ export default function Home() {
     setError(null);
 
     try {
+      const token = await getAuthToken();
+      
       const response = await fetch("/api/mr-pandey", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
+        credentials: "include",
         body: JSON.stringify({
           name: prospect.name,
           title: prospect.title,
@@ -296,7 +303,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [prospects]);
+  }, [prospects, getAuthToken]);
 
   const handleAskMrPandey = useCallback(async () => {
     if (!selectedProspectId) {
@@ -364,7 +371,7 @@ export default function Home() {
       <div className="max-w-[1920px] mx-auto">
         {/* Header */}
         <div className="mb-6 lg:mb-8">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
+          <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center shadow-lg shadow-yellow-500/50 ring-2 ring-yellow-500/20">
                 <svg className="h-8 w-8 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -403,46 +410,95 @@ export default function Home() {
               </button>
             </div>
           </div>
+
+          {/* Tab Navigation */}
+          <div className="flex gap-2 border-b border-gray-700/50">
+            <button
+              onClick={() => setActiveTab("strategy")}
+              className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                activeTab === "strategy"
+                  ? "text-yellow-500"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Strategy
+              </span>
+              {activeTab === "strategy" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-600"></span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveTab("prospects")}
+              className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                activeTab === "prospects"
+                  ? "text-yellow-500"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Prospects ({prospects.length})
+              </span>
+              {activeTab === "prospects" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-600"></span>
+              )}
+            </button>
+          </div>
         </div>
 
-        {/* Main Content - 3 Panel Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 h-[calc(100vh-10rem)] lg:h-[calc(100vh-12rem)]">
-          {/* Left Panel - Prospect List (Sidebar) */}
-          <div className="lg:col-span-3 h-full min-h-[300px] lg:min-h-0">
+        {/* Main Content - Tab Views */}
+        {activeTab === "strategy" ? (
+          /* Strategy Tab - Prospect Form + Strategy Panel */
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-16rem)] min-h-[600px]">
+            {/* Left Panel - Prospect Form */}
+            <div className="h-full">
+              <ProspectForm
+                prospect={currentProspect}
+                prospectId={selectedProspectId}
+                onProspectChange={setCurrentProspect}
+                onSaveProspect={handleSaveProspect}
+                onAskMrPandey={handleAskMrPandey}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* Right Panel - Strategy Display */}
+            <div className="h-full">
+              <StrategyPanel
+                strategy={selectedProspect?.strategy || null}
+                strategyGeneratedAt={selectedProspect?.strategyGeneratedAt || null}
+                isLoading={isLoading}
+                error={error}
+                onRegenerate={
+                  selectedProspect?.strategy ? handleRegenerateStrategy : undefined
+                }
+              />
+            </div>
+          </div>
+        ) : (
+          /* Prospects Tab - Prospect List */
+          <div className="h-[calc(100vh-16rem)] min-h-[400px]">
             <ProspectList
               prospects={prospects}
               selectedProspectId={selectedProspectId}
-              onSelectProspect={handleSelectProspect}
-              onNewProspect={handleNewProspect}
+              onSelectProspect={(id) => {
+                handleSelectProspect(id);
+                setActiveTab("strategy");
+              }}
+              onNewProspect={() => {
+                handleNewProspect();
+                setActiveTab("strategy");
+              }}
               onDeleteProspect={handleDeleteProspect}
             />
           </div>
-
-          {/* Middle Panel - Prospect Form */}
-          <div className="lg:col-span-4 h-full min-h-[400px] lg:min-h-0">
-            <ProspectForm
-              prospect={currentProspect}
-              prospectId={selectedProspectId}
-              onProspectChange={setCurrentProspect}
-              onSaveProspect={handleSaveProspect}
-              onAskMrPandey={handleAskMrPandey}
-              isLoading={isLoading}
-            />
-          </div>
-
-          {/* Right Panel - Strategy Display */}
-          <div className="lg:col-span-5 h-full min-h-[400px] lg:min-h-0">
-            <StrategyPanel
-              strategy={selectedProspect?.strategy || null}
-              strategyGeneratedAt={selectedProspect?.strategyGeneratedAt || null}
-              isLoading={isLoading}
-              error={error}
-              onRegenerate={
-                selectedProspect?.strategy ? handleRegenerateStrategy : undefined
-              }
-            />
-          </div>
-        </div>
+        )}
       </div>
     </main>
   );

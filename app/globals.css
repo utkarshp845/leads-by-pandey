@@ -55,13 +55,13 @@ html {
 
 /* Focus styles for accessibility */
 :focus-visible {
-  outline: 2px solid #fbbf24;
+  outline: 2px solid #d4af37;
   outline-offset: 2px;
 }
 
 /* Selection styles */
 ::selection {
-  background-color: #fbbf24;
+  background-color: #d4af37;
   color: #000000;
 }
 
