@@ -4,10 +4,20 @@ frontend:
     preBuild:
       commands:
         - npm ci
-        - echo "Environment variables check:"
-        - echo "OPENROUTER_API_KEY is set: $([ -n \"$OPENROUTER_API_KEY\" ] && echo 'yes' || echo 'no')"
-        - echo "JWT_SECRET is set: $([ -n \"$JWT_SECRET\" ] && echo 'yes' || echo 'no')"
-        - echo "NODE_ENV: $NODE_ENV"
+        - echo "Checking environment variables..."
+        - |
+          if [ -n "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY is set"
+          else
+            echo "OPENROUTER_API_KEY is NOT set"
+          fi
+        - |
+          if [ -n "$JWT_SECRET" ]; then
+            echo "JWT_SECRET is set"
+          else
+            echo "JWT_SECRET is NOT set"
+          fi
+        - echo "NODE_ENV=$NODE_ENV"
     build:
       commands:
         - npm run build
@@ -19,8 +29,3 @@ frontend:
     paths:
       - node_modules/**/*
       - .next/cache/**/*
-backend:
-  phases:
-    build:
-      commands:
-        - '# Amplify backend build commands'
