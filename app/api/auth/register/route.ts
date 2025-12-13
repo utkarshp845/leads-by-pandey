@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashPassword, generateToken } from "@/lib/auth";
-import { createUser, findUserByEmail } from "@/lib/db";
+import { createUser, findUserByEmail } from "@/lib/db-supabase";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Check if user already exists (using normalized email)
-    if (findUserByEmail(normalizedEmail)) {
+    const existingUser = await findUserByEmail(normalizedEmail);
+    if (existingUser) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 409 }
@@ -62,9 +63,9 @@ export async function POST(request: NextRequest) {
       throw new Error("Failed to process password");
     }
 
-    let userWithPassword: ReturnType<typeof createUser>;
+    let userWithPassword: Awaited<ReturnType<typeof createUser>>;
     try {
-      userWithPassword = createUser(normalizedEmail, name.trim(), passwordHash);
+      userWithPassword = await createUser(normalizedEmail, name.trim(), passwordHash);
       console.log(`User created in database: ${userWithPassword.email} (ID: ${userWithPassword.id})`);
     } catch (error) {
       console.error("User creation error:", error);

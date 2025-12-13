@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, generateToken } from "@/lib/auth";
-import { findUserByEmail, loadUsers } from "@/lib/db";
+import { findUserByEmail, loadUsers } from "@/lib/db-supabase";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
@@ -22,10 +22,11 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email.toLowerCase().trim();
 
     // Find user
-    const user = findUserByEmail(normalizedEmail);
+    const user = await findUserByEmail(normalizedEmail);
     if (!user) {
       console.log(`ERROR: Login failed: User not found for email: ${normalizedEmail}`);
-      console.log(`   Available users: ${loadUsers().map(u => u.email).join(", ") || "none"}`);
+      const allUsers = await loadUsers();
+      console.log(`   Available users: ${allUsers.map(u => u.email).join(", ") || "none"}`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }

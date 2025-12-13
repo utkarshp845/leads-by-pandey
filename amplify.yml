@@ -33,6 +33,14 @@ frontend:
           else
             echo "NODE_ENV=production" >> .env.production
           fi
+        - |
+          if [ -n "$NEXT_PUBLIC_SUPABASE_URL" ]; then
+            echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
+          fi
+        - |
+          if [ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ]; then
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
+          fi
         - echo "Environment variables written to .env.production"
     build:
       commands:

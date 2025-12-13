@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromRequest } from "@/lib/auth";
-import { loadUserProspects, saveUserProspects } from "@/lib/db";
+import { loadUserProspects, saveUserProspects } from "@/lib/db-supabase";
 import { SavedProspect } from "@/lib/types";
 
 // Mark route as dynamic to allow cookie access
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Load prospects for user
-    const prospects = loadUserProspects(user.userId);
+    const prospects = await loadUserProspects(user.userId);
     return NextResponse.json({ prospects });
   } catch (error) {
     console.error("Error loading prospects:", error);
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save prospects for user
-    saveUserProspects(user.userId, prospects as SavedProspect[]);
+    await saveUserProspects(user.userId, prospects as SavedProspect[]);
     return NextResponse.json({ message: "Prospects saved successfully" });
   } catch (error) {
     console.error("Error saving prospects:", error);
