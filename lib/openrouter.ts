@@ -189,15 +189,24 @@ function parseLabeledSections(content: string): StrategyResponse {
 export async function generateStrategy(
   prospect: Prospect
 ): Promise<StrategyResponse> {
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  // Check environment variable - try multiple ways to access it
+  const apiKey = process.env.OPENROUTER_API_KEY || 
+                 process.env.NEXT_PUBLIC_OPENROUTER_API_KEY ||
+                 (typeof process !== 'undefined' && (process as any).env?.OPENROUTER_API_KEY);
+  
+  // Debug logging (without exposing the key)
+  console.log("Environment check:");
+  console.log("  - OPENROUTER_API_KEY exists:", !!process.env.OPENROUTER_API_KEY);
+  console.log("  - OPENROUTER_API_KEY length:", process.env.OPENROUTER_API_KEY?.length || 0);
+  console.log("  - NODE_ENV:", process.env.NODE_ENV);
+  console.log("  - All env keys:", Object.keys(process.env).filter(k => k.includes('OPENROUTER') || k.includes('JWT')));
   
   if (!apiKey || apiKey.trim() === "") {
+    const errorMsg = "OPENROUTER_API_KEY is not set. Please add it to your environment variables in AWS Amplify Console. Get your API key at https://openrouter.ai/keys";
     console.error("❌ OPENROUTER_API_KEY is not set!");
-    console.error("   Please set OPENROUTER_API_KEY in your .env file or environment variables.");
-    console.error("   Get your API key at: https://openrouter.ai/keys");
-    throw new Error(
-      "OPENROUTER_API_KEY is not set. Please add it to your .env file or environment variables. Get your API key at https://openrouter.ai/keys"
-    );
+    console.error("   Environment variables available:", Object.keys(process.env).filter(k => k.includes('OPEN') || k.includes('JWT')));
+    console.error("   Please set OPENROUTER_API_KEY in AWS Amplify Console → App settings → Environment variables");
+    throw new Error(errorMsg);
   }
   
   console.log("✓ OPENROUTER_API_KEY is set (length: " + apiKey.length + ")");

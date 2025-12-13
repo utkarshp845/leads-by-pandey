@@ -4,6 +4,10 @@ frontend:
     preBuild:
       commands:
         - npm ci
+        - echo "Environment variables check:"
+        - echo "OPENROUTER_API_KEY is set: $([ -n \"$OPENROUTER_API_KEY\" ] && echo 'yes' || echo 'no')"
+        - echo "JWT_SECRET is set: $([ -n \"$JWT_SECRET\" ] && echo 'yes' || echo 'no')"
+        - echo "NODE_ENV: $NODE_ENV"
     build:
       commands:
         - npm run build
