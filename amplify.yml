@@ -18,6 +18,22 @@ frontend:
             echo "JWT_SECRET is NOT set"
           fi
         - echo "NODE_ENV=$NODE_ENV"
+        - echo "Writing environment variables to .env.production for runtime access..."
+        - |
+          if [ -n "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY=$OPENROUTER_API_KEY" >> .env.production
+          fi
+        - |
+          if [ -n "$JWT_SECRET" ]; then
+            echo "JWT_SECRET=$JWT_SECRET" >> .env.production
+          fi
+        - |
+          if [ -n "$NODE_ENV" ]; then
+            echo "NODE_ENV=$NODE_ENV" >> .env.production
+          else
+            echo "NODE_ENV=production" >> .env.production
+          fi
+        - echo "Environment variables written to .env.production"
     build:
       commands:
         - npm run build

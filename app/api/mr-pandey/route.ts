@@ -11,6 +11,9 @@ export const dynamic = "force-dynamic";
  * Accepts prospect data and returns a 5-piece lead generation strategy
  */
 export async function POST(request: NextRequest) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/mr-pandey/route.ts:13',message:'POST /api/mr-pandey called',data:{nodeEnv:process.env.NODE_ENV,hasOpenRouterKey:!!process.env.OPENROUTER_API_KEY,openRouterKeyLength:process.env.OPENROUTER_API_KEY?.length||0,allEnvKeys:Object.keys(process.env).filter(k=>k.includes('OPEN')||k.includes('JWT')||k.includes('NODE')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+  // #endregion
   try {
     // Check authentication
     const authHeader = request.headers.get("authorization");
