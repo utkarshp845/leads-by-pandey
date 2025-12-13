@@ -189,17 +189,10 @@ function parseLabeledSections(content: string): StrategyResponse {
 export async function generateStrategy(
   prospect: Prospect
 ): Promise<StrategyResponse> {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/openrouter.ts:189',message:'generateStrategy entry',data:{nodeEnv:process.env.NODE_ENV,hasOpenRouterKey:!!process.env.OPENROUTER_API_KEY,openRouterKeyLength:process.env.OPENROUTER_API_KEY?.length||0,hasNextPublicKey:!!process.env.NEXT_PUBLIC_OPENROUTER_API_KEY,allEnvKeys:Object.keys(process.env).filter(k=>k.includes('OPEN')||k.includes('JWT')||k.includes('NODE')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-  // #endregion
   // Check environment variable - try multiple ways to access it
   const apiKey = process.env.OPENROUTER_API_KEY || 
                  process.env.NEXT_PUBLIC_OPENROUTER_API_KEY ||
                  (typeof process !== 'undefined' && (process as any).env?.OPENROUTER_API_KEY);
-  
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/openrouter.ts:196',message:'After apiKey extraction',data:{apiKeyExists:!!apiKey,apiKeyLength:apiKey?.length||0,apiKeyIsEmpty:!apiKey||apiKey.trim()===''},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-  // #endregion
   
   // Debug logging (without exposing the key)
   console.log("Environment check:");
@@ -209,9 +202,6 @@ export async function generateStrategy(
   console.log("  - All env keys:", Object.keys(process.env).filter(k => k.includes('OPENROUTER') || k.includes('JWT')));
   
   if (!apiKey || apiKey.trim() === "") {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/openrouter.ts:204',message:'API key missing - throwing error',data:{nodeEnv:process.env.NODE_ENV,allEnvKeys:Object.keys(process.env).join(','),envKeysWithOpen:Object.keys(process.env).filter(k=>k.includes('OPEN')||k.includes('JWT')).join(',')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     const errorMsg = "OPENROUTER_API_KEY is not set. Please add it to your environment variables in AWS Amplify Console. Get your API key at https://openrouter.ai/keys";
     console.error("❌ OPENROUTER_API_KEY is not set!");
     console.error("   Environment variables available:", Object.keys(process.env).filter(k => k.includes('OPEN') || k.includes('JWT')));
