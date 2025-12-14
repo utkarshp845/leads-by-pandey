@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 import { loadUserProspects, saveUserProspects } from "@/lib/db-supabase";
 import { SavedProspect } from "@/lib/types";
 
@@ -8,19 +8,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get user from auth header or cookie
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "") || request.cookies.get("auth-token")?.value;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-
-    const user = getUserFromRequest(authHeader || `Bearer ${token}`);
-
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { error: "Not authenticated" },
@@ -42,19 +30,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get user from auth header or cookie
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.replace("Bearer ", "") || request.cookies.get("auth-token")?.value;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
-    }
-
-    const user = getUserFromRequest(authHeader || `Bearer ${token}`);
-
+    const user = await getUserFromRequest(request);
     if (!user) {
       return NextResponse.json(
         { error: "Not authenticated" },

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import ProspectForm from "@/components/ProspectForm";
 import ProspectList from "@/components/ProspectList";
 import StrategyPanel from "@/components/StrategyPanel";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard";
+import { MrPandeyAssistant } from "@/components/MrPandeyAssistant";
 import { Prospect, StrategyResponse, SavedProspect } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { createSavedProspect } from "@/lib/storage";
@@ -28,7 +30,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<"strategy" | "prospects">("strategy");
+  const [activeTab, setActiveTab] = useState<"strategy" | "prospects" | "analytics">("strategy");
 
   // Memoized functions to prevent unnecessary re-renders
   const getAuthToken = useCallback(async (): Promise<string> => {
@@ -402,6 +404,13 @@ export default function Home() {
                 <p className="text-xs text-gray-400 truncate max-w-[150px]">{user.email}</p>
               </div>
               <button
+                onClick={() => router.push("/settings")}
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800/60 rounded-lg transition-all whitespace-nowrap border border-gray-700/50 hover:border-yellow-500/50 backdrop-blur-sm"
+                aria-label="Settings"
+              >
+                Settings
+              </button>
+              <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800/60 rounded-lg transition-all whitespace-nowrap border border-gray-700/50 hover:border-yellow-500/50 backdrop-blur-sm"
                 aria-label="Logout"
@@ -449,6 +458,24 @@ export default function Home() {
                 <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-600"></span>
               )}
             </button>
+            <button
+              onClick={() => setActiveTab("analytics")}
+              className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                activeTab === "analytics"
+                  ? "text-yellow-500"
+                  : "text-gray-400 hover:text-gray-300"
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                Analytics
+              </span>
+              {activeTab === "analytics" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-yellow-500 to-yellow-600"></span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -481,7 +508,7 @@ export default function Home() {
               />
             </div>
           </div>
-        ) : (
+        ) : activeTab === "prospects" ? (
           /* Prospects Tab - Prospect List */
           <div className="h-[calc(100vh-16rem)] min-h-[400px]">
             <ProspectList
@@ -498,8 +525,16 @@ export default function Home() {
               onDeleteProspect={handleDeleteProspect}
             />
           </div>
+        ) : (
+          /* Analytics Tab */
+          <div className="h-[calc(100vh-16rem)] min-h-[400px] overflow-y-auto">
+            <AnalyticsDashboard />
+          </div>
         )}
       </div>
+
+      {/* Mr. Pandey Assistant - Always Available */}
+      <MrPandeyAssistant context={activeTab === "strategy" ? "strategy" : activeTab === "prospects" ? "prospects" : activeTab === "analytics" ? "analytics" : "default"} />
     </main>
   );
 }
