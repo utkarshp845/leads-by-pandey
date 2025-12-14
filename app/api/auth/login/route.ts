@@ -6,12 +6,12 @@ import { findUserByEmail, loadUsers } from "@/lib/db-supabase";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:8',message:'Login attempt started',data:{hasEmail:!!email,hasPassword:!!password,emailProvided:email?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
-  // #endregion
   try {
     const body = await request.json();
     const { email, password } = body;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:10',message:'Login attempt started',data:{hasEmail:!!email,hasPassword:!!password,emailProvided:email?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
 
     // Validation
     if (!email || !password) {
