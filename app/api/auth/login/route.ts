@@ -25,8 +25,14 @@ export async function POST(request: NextRequest) {
     const user = await findUserByEmail(normalizedEmail);
     if (!user) {
       console.log(`ERROR: Login failed: User not found for email: ${normalizedEmail}`);
+      console.log(`   Searching for: "${normalizedEmail}"`);
       const allUsers = await loadUsers();
-      console.log(`   Available users: ${allUsers.map(u => u.email).join(", ") || "none"}`);
+      console.log(`   Available users in database: ${allUsers.length}`);
+      if (allUsers.length > 0) {
+        console.log(`   User emails: ${allUsers.map(u => `"${u.email}"`).join(", ")}`);
+      } else {
+        console.log(`   No users found in database - database may be empty or not connected`);
+      }
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }
@@ -40,8 +46,11 @@ export async function POST(request: NextRequest) {
     // Verify password
     let isValid: boolean;
     try {
+      console.log(`   Verifying password for user: ${user.email}`);
+      console.log(`   Password hash exists: ${!!user.passwordHash}`);
+      console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
       isValid = await verifyPassword(password, user.passwordHash);
-      console.log(`   Password verification: ${isValid ? "Valid" : "Invalid"}`);
+      console.log(`   Password verification result: ${isValid ? "✅ Valid" : "❌ Invalid"}`);
     } catch (error) {
       console.error("Password verification error:", error);
       return NextResponse.json(
@@ -52,6 +61,7 @@ export async function POST(request: NextRequest) {
 
     if (!isValid) {
       console.log(`ERROR: Login failed: Invalid password for email: ${normalizedEmail}`);
+      console.log(`   User exists but password does not match`);
       return NextResponse.json(
         { error: "Invalid email or password" },
         { status: 401 }

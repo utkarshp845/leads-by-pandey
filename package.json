@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "create-test-user": "tsx scripts/create-test-user.ts"
+    "create-test-user": "tsx scripts/create-test-user.ts",
+    "verify-test-user": "tsx scripts/verify-test-user.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.87.1",

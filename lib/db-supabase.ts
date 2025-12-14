@@ -89,11 +89,13 @@ export async function saveUsers(users: UserWithPassword[]): Promise<void> {
  */
 export async function findUserByEmail(email: string): Promise<UserWithPassword | null> {
   if (!isSupabaseAvailable()) {
+    console.log('⚠️  Supabase not available, using file-based storage fallback');
     return fsDb.findUserByEmail(email);
   }
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
+    console.log(`🔍 Searching for user in Supabase: "${normalizedEmail}"`);
     const { data, error } = await supabase!
       .from('users')
       .select('*')
@@ -103,14 +105,22 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
     if (error) {
       if (error.code === 'PGRST116') {
         // No rows returned - user not found
+        console.log(`❌ User not found in Supabase: "${normalizedEmail}"`);
         return null;
       }
-      console.error("Error finding user by email:", error);
+      console.error("Error finding user by email in Supabase:", error);
+      console.error("   Error code:", error.code);
+      console.error("   Error message:", error.message);
+      console.log("   Falling back to file-based storage");
       return fsDb.findUserByEmail(email);
     }
 
-    if (!data) return null;
+    if (!data) {
+      console.log(`❌ No data returned for user: "${normalizedEmail}"`);
+      return null;
+    }
 
+    console.log(`✅ User found in Supabase: ${data.email} (ID: ${data.id})`);
     return {
       id: data.id,
       email: data.email,
