@@ -12,7 +12,7 @@ A professional lead generation strategy tool powered by AI. Generate personalize
   - Positioning Strategy
   - Communication Tone Suggestions
   - First Message Structure
-- **Persistent Storage**: All prospects and strategies are saved per user
+- **Persistent Storage**: All prospects and strategies are saved per user using Supabase (PostgreSQL)
 - **Professional UI**: Modern, sales-focused black and gold design
 
 ## Tech Stack
@@ -20,6 +20,7 @@ A professional lead generation strategy tool powered by AI. Generate personalize
 - **Next.js 14** - React framework with App Router
 - **TypeScript** - Type-safe development
 - **Tailwind CSS** - Utility-first styling
+- **Supabase** - PostgreSQL database for persistent storage
 - **OpenRouter API** - AI model integration
 - **JWT** - Secure authentication
 - **bcryptjs** - Password hashing
@@ -30,13 +31,14 @@ A professional lead generation strategy tool powered by AI. Generate personalize
 
 - Node.js 18+ and npm
 - OpenRouter API key ([Get one here](https://openrouter.ai/))
+- Supabase account ([Get one here](https://supabase.com)) - Free tier available
 
 ### Installation
 
 1. Clone the repository:
 ```bash
 git clone <repository-url>
-cd Leads
+cd leads-by-pandey
 ```
 
 2. Install dependencies:
@@ -44,10 +46,17 @@ cd Leads
 npm install
 ```
 
-3. Create a `.env` file in the root directory with:
+3. Set up Supabase database:
+   - Create a project at [supabase.com](https://supabase.com)
+   - Go to **SQL Editor** and run `supabase-schema.sql`
+   - Get your API credentials from **Settings** → **API**
+
+4. Create a `.env` file in the root directory:
 ```env
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 JWT_SECRET=your_strong_random_secret_here
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 NODE_ENV=development
 ```
 
@@ -63,24 +72,23 @@ npm run dev
 
 6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Production Deployment
+## Production Deployment (AWS Amplify)
 
-1. Build the application:
-```bash
-npm run build
-```
+### Environment Variables
 
-2. Start the production server:
-```bash
-npm start
-```
+Set these in AWS Amplify Console → App settings → Environment variables:
 
-### Environment Variables for Production
-
-Make sure to set:
 - `OPENROUTER_API_KEY` - Your OpenRouter API key
-- `JWT_SECRET` - A strong, randomly generated secret (required)
-- `NODE_ENV=production` - Set to production mode
+- `JWT_SECRET` - A strong, randomly generated secret
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anon key
+- `NODE_ENV` - Set to `production`
+
+### Database Setup
+
+1. Run `supabase-schema.sql` in your Supabase SQL Editor
+2. The schema includes RLS policies for secure access
+3. Users and prospects will persist across deployments
 
 ## Project Structure
 
@@ -94,31 +102,21 @@ Make sure to set:
 │   ├── register/         # Registration page
 │   └── page.tsx          # Main application page
 ├── components/           # React components
-│   ├── ErrorBoundary.tsx
-│   ├── ProspectForm.tsx
-│   ├── ProspectList.tsx
-│   └── StrategyPanel.tsx
 ├── lib/                  # Utility functions
 │   ├── auth.ts           # Authentication utilities
-│   ├── auth-context.tsx  # Auth React context
-│   ├── db.ts             # File-based database
-│   ├── openrouter.ts     # OpenRouter API client
-│   └── types.ts          # TypeScript types
-└── data/                 # User data storage (created automatically)
+│   ├── db-supabase.ts   # Supabase database adapter
+│   ├── openrouter.ts    # OpenRouter API client
+│   └── types.ts         # TypeScript types
+└── scripts/              # Utility scripts
+    ├── create-test-user.ts
+    └── verify-test-user.ts
 ```
-
-## Data Storage
-
-The application uses file-based storage in the `data/` directory:
-- `data/users.json` - User accounts
-- `data/prospects/` - User-specific prospect files
-
-**Note**: For production, consider migrating to a proper database (PostgreSQL, MongoDB, etc.)
 
 ## Security Features
 
 - Password hashing with bcrypt
 - JWT tokens with httpOnly cookies
+- Row Level Security (RLS) in Supabase
 - Input validation and sanitization
 - User data isolation
 - Protected API routes
@@ -126,4 +124,3 @@ The application uses file-based storage in the `data/` directory:
 ## License
 
 Private - All rights reserved
-
