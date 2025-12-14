@@ -103,15 +103,30 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
     const normalizedEmail = email.toLowerCase().trim();
     console.log(`🔍 Searching for user in Supabase: "${normalizedEmail}"`);
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:98',message:'Querying Supabase for user',data:{normalizedEmail},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:98',message:'Querying Supabase for user',data:{normalizedEmail,emailLength:normalizedEmail.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
     // #endregion
+    
+    // First, let's check what users exist in the database
+    const { data: allUsers, error: listError } = await supabase!
+      .from('users')
+      .select('id, email, name')
+      .limit(10);
+    
+    console.log(`📋 Users in database: ${allUsers?.length || 0}`);
+    if (allUsers && allUsers.length > 0) {
+      console.log(`   User emails: ${allUsers.map(u => `"${u.email}"`).join(', ')}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:105',message:'All users in database',data:{userCount:allUsers.length,userEmails:allUsers.map(u=>u.email),searchingFor:normalizedEmail},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H3'})}).catch(()=>{});
+      // #endregion
+    }
+    
     const { data, error } = await supabase!
       .from('users')
       .select('*')
       .eq('email', normalizedEmail)
       .single();
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:103',message:'Supabase query result',data:{hasData:!!data,hasError:!!error,errorCode:error?.code||'none',errorMessage:error?.message||'none',userEmail:data?.email||'none',hasPasswordHash:!!data?.password_hash},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:115',message:'Supabase query result',data:{hasData:!!data,hasError:!!error,errorCode:error?.code||'none',errorMessage:error?.message||'none',errorDetails:error?.details||'none',userEmail:data?.email||'none',hasPasswordHash:!!data?.password_hash,searchedEmail:normalizedEmail},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
     // #endregion
 
     if (error) {
