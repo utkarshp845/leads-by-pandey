@@ -88,19 +88,31 @@ export async function saveUsers(users: UserWithPassword[]): Promise<void> {
  * Find user by email
  */
 export async function findUserByEmail(email: string): Promise<UserWithPassword | null> {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:90',message:'findUserByEmail entry',data:{email,supabaseAvailable:isSupabaseAvailable(),supabaseUrl:process.env.NEXT_PUBLIC_SUPABASE_URL||process.env.SUPABASE_URL||'none',hasSupabaseKey:!!(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY||process.env.SUPABASE_ANON_KEY)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+  // #endregion
   if (!isSupabaseAvailable()) {
     console.log('⚠️  Supabase not available, using file-based storage fallback');
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:92',message:'Supabase not available - using file fallback',data:{email},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     return fsDb.findUserByEmail(email);
   }
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
     console.log(`🔍 Searching for user in Supabase: "${normalizedEmail}"`);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:98',message:'Querying Supabase for user',data:{normalizedEmail},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     const { data, error } = await supabase!
       .from('users')
       .select('*')
       .eq('email', normalizedEmail)
       .single();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:103',message:'Supabase query result',data:{hasData:!!data,hasError:!!error,errorCode:error?.code||'none',errorMessage:error?.message||'none',userEmail:data?.email||'none',hasPasswordHash:!!data?.password_hash},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
 
     if (error) {
       if (error.code === 'PGRST116') {

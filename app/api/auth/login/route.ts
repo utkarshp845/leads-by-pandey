@@ -6,6 +6,9 @@ import { findUserByEmail, loadUsers } from "@/lib/db-supabase";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:8',message:'Login attempt started',data:{hasEmail:!!email,hasPassword:!!password,emailProvided:email?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+  // #endregion
   try {
     const body = await request.json();
     const { email, password } = body;
@@ -20,9 +23,15 @@ export async function POST(request: NextRequest) {
 
     // Normalize email
     const normalizedEmail = email.toLowerCase().trim();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:22',message:'Email normalized',data:{originalEmail:email,normalizedEmail},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
 
     // Find user
     const user = await findUserByEmail(normalizedEmail);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:25',message:'After findUserByEmail',data:{userFound:!!user,userId:user?.id||'none',userEmail:user?.email||'none',hasPasswordHash:!!user?.passwordHash,passwordHashLength:user?.passwordHash?.length||0},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     if (!user) {
       console.log(`ERROR: Login failed: User not found for email: ${normalizedEmail}`);
       console.log(`   Searching for: "${normalizedEmail}"`);
@@ -49,7 +58,13 @@ export async function POST(request: NextRequest) {
       console.log(`   Verifying password for user: ${user.email}`);
       console.log(`   Password hash exists: ${!!user.passwordHash}`);
       console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:52',message:'Before password verification',data:{passwordLength:password?.length||0,passwordHashLength:user.passwordHash?.length||0,passwordHashPrefix:user.passwordHash?.substring(0,20)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       isValid = await verifyPassword(password, user.passwordHash);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'app/api/auth/login/route.ts:54',message:'After password verification',data:{isValid,passwordProvided:password?.substring(0,5)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       console.log(`   Password verification result: ${isValid ? "✅ Valid" : "❌ Invalid"}`);
     } catch (error) {
       console.error("Password verification error:", error);
