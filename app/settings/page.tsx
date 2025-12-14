@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import Link from "next/link";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { Card } from "@/components/Card";
@@ -13,12 +14,20 @@ import { MrPandeyAssistant } from "@/components/MrPandeyAssistant";
 type Tab = "profile" | "notifications" | "ai" | "export" | "account";
 
 export default function SettingsPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const router = useRouter();
   const { showToast, ToastContainer } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("profile");
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const handleLogout = async () => {
+    await logout();
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth-token");
+    }
+    router.push("/login");
+  };
 
   // Profile state
   const [name, setName] = useState("");
@@ -114,8 +123,32 @@ export default function SettingsPage() {
     <main className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black p-4 md:p-6 lg:p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-yellow-500 mb-2">Settings</h1>
-          <p className="text-gray-400">Manage your account and preferences</p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-bold text-yellow-500 mb-2">Settings</h1>
+              <p className="text-gray-400">Manage your account and preferences</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link href="/">
+                <Button variant="secondary" size="sm">
+                  <span className="flex items-center gap-2">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    Back to Main
+                  </span>
+                </Button>
+              </Link>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <span className="flex items-center gap-2">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </span>
+              </Button>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
