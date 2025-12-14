@@ -133,6 +133,11 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
     }
 
     console.log(`✅ User found in Supabase: ${data.email} (ID: ${data.id})`);
+    console.log(`   Password hash from DB: ${data.password_hash ? data.password_hash.substring(0, 20) + '...' : 'MISSING'}`);
+    console.log(`   Password hash length: ${data.password_hash?.length || 0}`);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/fd2f8a3a-1b88-4937-b497-328be366d44b',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/db-supabase.ts:123',message:'User found - returning user data',data:{userId:data.id,userEmail:data.email,hasPasswordHash:!!data.password_hash,passwordHashLength:data.password_hash?.length||0,passwordHashPrefix:data.password_hash?.substring(0,30)||'none'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H2'})}).catch(()=>{});
+    // #endregion
     return {
       id: data.id,
       email: data.email,
