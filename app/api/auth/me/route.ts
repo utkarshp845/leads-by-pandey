@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/lib/auth";
-import { findUserById } from "@/lib/db";
+import { findUserById } from "@/lib/db-supabase";
+import { handleError, createError, ErrorType } from "@/lib/error-handler";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
@@ -13,34 +14,20 @@ export async function GET(request: NextRequest) {
     const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
     if (!token) {
-      console.log("ERROR: /api/auth/me: No token found");
-      return NextResponse.json(
-        { error: "Not authenticated" },
-        { status: 401 }
-      );
+      throw createError(ErrorType.AUTH_ERROR, "Not authenticated", 401);
     }
 
     // Verify token
     const decoded = verifyToken(token);
     if (!decoded) {
-      console.log("ERROR: /api/auth/me: Invalid token");
-      return NextResponse.json(
-        { error: "Invalid token" },
-        { status: 401 }
-      );
+      throw createError(ErrorType.AUTH_ERROR, "Invalid token", 401);
     }
 
     // Get user
-    const user = findUserById(decoded.userId);
+    const user = await findUserById(decoded.userId);
     if (!user) {
-      console.log(`ERROR: /api/auth/me: User not found for ID: ${decoded.userId}`);
-      return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
-      );
+      throw createError(ErrorType.NOT_FOUND, "User not found", 404);
     }
-
-    console.log(`/api/auth/me: Authenticated user: ${user.email}`);
 
     // Return user without password
     return NextResponse.json({
@@ -53,11 +40,7 @@ export async function GET(request: NextRequest) {
       token, // Also return token for client-side use
     });
   } catch (error) {
-    console.error("Auth check error:", error);
-    return NextResponse.json(
-      { error: "Failed to verify authentication" },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 

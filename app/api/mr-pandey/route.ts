@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateStrategy } from "@/lib/openrouter";
-import { getUserFromRequest } from "@/lib/auth";
+import { getUserFromRequest } from "@/lib/auth-helpers";
 import { Prospect } from "@/lib/types";
+import { validateProspect, validateRequestBodySize, sanitizeText, validateUrl } from "@/lib/validation";
+import { handleError, createError, ErrorType } from "@/lib/error-handler";
+import { logUserActivity, logPerformance } from "@/lib/logger";
+import { rateLimiters } from "@/lib/rate-limit";
 
 // Mark route as dynamic
 export const dynamic = "force-dynamic";
@@ -11,98 +15,70 @@ export const dynamic = "force-dynamic";
  * Accepts prospect data and returns a 5-piece lead generation strategy
  */
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
-    // Check authentication
-    const authHeader = request.headers.get("authorization");
-    const cookieToken = request.cookies.get("auth-token")?.value;
-    const token = authHeader?.replace("Bearer ", "") || cookieToken;
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: "Authentication required. Please log in again." },
-        { status: 401 }
-      );
-    }
-    
-    const user = getUserFromRequest(authHeader || `Bearer ${token}`);
-    
+    // Check authentication first (needed for user-based rate limiting)
+    const user = await getUserFromRequest(request);
     if (!user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session. Please log in again." },
-        { status: 401 }
-      );
-    }
-    
-    // Rate limiting check (basic - can be enhanced with Redis in production)
-    // For now, we'll rely on OpenRouter's rate limiting
-    
-    const body = await request.json();
-    
-    // Validate required fields
-    const prospect: Prospect = {
-      name: (body.name || "").trim(),
-      title: (body.title || "").trim(),
-      company: (body.company || "").trim(),
-      industry: (body.industry || "").trim(),
-      notes: (body.notes || "").trim(),
-      knownPainPoints: (body.knownPainPoints || "").trim(),
-      links: Array.isArray(body.links) 
-        ? body.links.map((link: any) => String(link).trim()).filter((link: string) => link.length > 0)
-        : [],
-      priorInteractions: (body.priorInteractions || "").trim(),
-    };
-    
-    // Basic validation - at least name and company should be provided
-    if (!prospect.name || !prospect.company) {
-      return NextResponse.json(
-        { error: "Name and company are required fields" },
-        { status: 400 }
-      );
+      throw createError(ErrorType.AUTH_ERROR, "Authentication required. Please log in again.", 401);
     }
 
-    // Sanitize input length (prevent abuse)
-    if (prospect.name.length > 200 || prospect.company.length > 200) {
-      return NextResponse.json(
-        { error: "Name and company must be less than 200 characters" },
-        { status: 400 }
-      );
+    // Apply rate limiting (user-based)
+    const rateLimitResult = rateLimiters.strategyGeneration(request);
+    if (!rateLimitResult.allowed && rateLimitResult.response) {
+      return rateLimitResult.response;
+    }
+    
+    // Validate request body size
+    const body = await request.json();
+    const sizeCheck = validateRequestBodySize(body, 50000); // 50KB max for strategy generation
+    if (!sizeCheck.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, sizeCheck.error || "Request too large", 413);
+    }
+    
+    // Validate and sanitize prospect data
+    const prospect: Prospect = {
+      name: sanitizeText(body.name || "", 200).trim(),
+      title: sanitizeText(body.title || "", 200).trim(),
+      company: sanitizeText(body.company || "", 200).trim(),
+      industry: sanitizeText(body.industry || "", 100).trim(),
+      notes: sanitizeText(body.notes || "", 10000).trim(),
+      knownPainPoints: sanitizeText(body.knownPainPoints || "", 5000).trim(),
+      links: Array.isArray(body.links) 
+        ? body.links
+            .map((link: any) => {
+              const urlValidation = validateUrl(String(link));
+              return urlValidation.valid && urlValidation.sanitized ? urlValidation.sanitized : null;
+            })
+            .filter((link: string | null): link is string => link !== null)
+            .slice(0, 20) // Limit to 20 links
+        : [],
+      priorInteractions: sanitizeText(body.priorInteractions || "", 5000).trim(),
+    };
+    
+    // Validate prospect data
+    const validation = validateProspect(prospect);
+    if (!validation.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, validation.error || "Invalid prospect data", 400);
     }
     
     // Generate strategy using OpenRouter
     const strategy = await generateStrategy(prospect);
     
-    // Log if we got fallback values (for debugging)
-    if (strategy.prospectSummary.includes("Unable to generate")) {
-      console.warn("Warning: Strategy parsing may have failed. Check logs above for raw response.");
-    }
+    // Log performance
+    const duration = Date.now() - startTime;
+    logPerformance("strategy_generation", duration, { userId: user.userId });
+    
+    // Log user activity
+    logUserActivity(user.userId, "strategy_generated", {
+      prospectName: prospect.name,
+      prospectCompany: prospect.company,
+    });
     
     return NextResponse.json(strategy, { status: 200 });
   } catch (error) {
-    console.error("Error generating strategy:", error);
-    
-    // Return user-friendly error messages
-    if (error instanceof Error) {
-      if (error.message.includes("OPENROUTER_API_KEY")) {
-        console.error("ERROR: OpenRouter API Key Error:", error.message);
-        return NextResponse.json(
-          { 
-            error: "OpenRouter API key is not configured. Please set OPENROUTER_API_KEY in your environment variables. Get your API key at https://openrouter.ai/keys",
-            details: process.env.NODE_ENV !== "production" ? error.message : undefined
-          },
-          { status: 500 }
-        );
-      }
-      
-      return NextResponse.json(
-        { error: error.message || "Failed to generate strategy. Please try again." },
-        { status: 500 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: "An unexpected error occurred. Please try again." },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 

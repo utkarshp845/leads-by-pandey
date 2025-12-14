@@ -1,6 +1,8 @@
 import { User, UserWithPassword, SavedProspect, UserSettings, Reminder, Template, AnalyticsData } from "./types";
 import { supabase } from "./supabase";
 import * as fsDb from "./db"; // Fallback to file-based storage
+import { retryOperation } from "./error-handler";
+import { logError, logWarn } from "./logger";
 
 /**
  * Supabase Database Adapter
@@ -14,6 +16,39 @@ const isSupabaseAvailable = () => {
 };
 
 /**
+ * Execute database operation with retry logic
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string
+): Promise<T> {
+  return retryOperation(
+    async () => {
+      try {
+        return await operation();
+      } catch (error) {
+        // Check if it's a connection error
+        if (error instanceof Error) {
+          const errorMessage = error.message.toLowerCase();
+          if (
+            errorMessage.includes('network') ||
+            errorMessage.includes('timeout') ||
+            errorMessage.includes('connection') ||
+            errorMessage.includes('econnrefused')
+          ) {
+            logWarn(`Database connection error in ${operationName}`, { error: error.message });
+            throw error; // Retry on connection errors
+          }
+        }
+        throw error;
+      }
+    },
+    3, // max retries
+    1000 // initial delay
+  );
+}
+
+/**
  * Load all users from Supabase
  */
 export async function loadUsers(): Promise<UserWithPassword[]> {
@@ -23,26 +58,28 @@ export async function loadUsers(): Promise<UserWithPassword[]> {
   }
 
   try {
-    const { data, error } = await supabase!
-      .from('users')
-      .select('*')
-      .order('created_at', { ascending: true });
+    return await withRetry(async () => {
+      const { data, error } = await supabase!
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: true });
 
-    if (error) {
-      console.error("Error loading users from Supabase:", error);
-      // Fallback to file-based storage on error
-      return fsDb.loadUsers();
-    }
+      if (error) {
+        logError("Error loading users from Supabase", error);
+        // Fallback to file-based storage on error
+        return fsDb.loadUsers();
+      }
 
-    return (data || []).map((user: any) => ({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      passwordHash: user.password_hash,
-      createdAt: new Date(user.created_at).getTime(),
-    }));
+      return (data || []).map((user: any) => ({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        passwordHash: user.password_hash,
+        createdAt: new Date(user.created_at).getTime(),
+      }));
+    }, 'loadUsers');
   } catch (error) {
-    console.error("Error loading users:", error);
+    logError("Error loading users", error instanceof Error ? error : new Error(String(error)));
     return fsDb.loadUsers();
   }
 }
@@ -89,48 +126,44 @@ export async function saveUsers(users: UserWithPassword[]): Promise<void> {
  */
 export async function findUserByEmail(email: string): Promise<UserWithPassword | null> {
   if (!isSupabaseAvailable()) {
-    console.log('⚠️  Supabase not available, using file-based storage fallback');
+    logWarn('Supabase not available, using file-based storage fallback');
     return fsDb.findUserByEmail(email);
   }
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    console.log(`Searching for user in Supabase: "${normalizedEmail}"`);
     
-    const { data, error } = await supabase!
-      .from('users')
-      .select('*')
-      .eq('email', normalizedEmail)
-      .single();
+    return await withRetry(async () => {
+      const { data, error } = await supabase!
+        .from('users')
+        .select('*')
+        .eq('email', normalizedEmail)
+        .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No rows returned - user not found
-        console.log(`❌ User not found in Supabase: "${normalizedEmail}"`);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - user not found
+          return null;
+        }
+        logError("Error finding user by email in Supabase", error);
+        // Fallback to file-based storage on error
+        return fsDb.findUserByEmail(email);
+      }
+
+      if (!data) {
         return null;
       }
-      console.error("Error finding user by email in Supabase:", error);
-      console.error("   Error code:", error.code);
-      console.error("   Error message:", error.message);
-      console.log("   Falling back to file-based storage");
-      return fsDb.findUserByEmail(email);
-    }
 
-    if (!data) {
-      console.log(`❌ No data returned for user: "${normalizedEmail}"`);
-      return null;
-    }
-
-    console.log(`✅ User found in Supabase: ${data.email} (ID: ${data.id})`);
-    return {
-      id: data.id,
-      email: data.email,
-      name: data.name,
-      passwordHash: data.password_hash,
-      createdAt: new Date(data.created_at).getTime(),
-    };
+      return {
+        id: data.id,
+        email: data.email,
+        name: data.name,
+        passwordHash: data.password_hash,
+        createdAt: new Date(data.created_at).getTime(),
+      };
+    }, 'findUserByEmail');
   } catch (error) {
-    console.error("Error finding user:", error);
+    logError("Error finding user", error instanceof Error ? error : new Error(String(error)));
     return fsDb.findUserByEmail(email);
   }
 }

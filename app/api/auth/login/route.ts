@@ -1,21 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyPassword, generateToken } from "@/lib/auth";
-import { findUserByEmail, loadUsers } from "@/lib/db-supabase";
+import { findUserByEmail } from "@/lib/db-supabase";
+import { validateEmail, validateRequestBodySize } from "@/lib/validation";
+import { handleError, createError, ErrorType } from "@/lib/error-handler";
+import { logUserActivity, logWarn } from "@/lib/logger";
+import { rateLimiters } from "@/lib/rate-limit";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResult = rateLimiters.login(request);
+    if (!rateLimitResult.allowed && rateLimitResult.response) {
+      return rateLimitResult.response;
+    }
+
+    // Validate request body size
     const body = await request.json();
+    const sizeCheck = validateRequestBodySize(body, 10000);
+    if (!sizeCheck.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, sizeCheck.error || "Request too large", 413);
+    }
+
     const { email, password } = body;
 
     // Validation
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+      throw createError(ErrorType.VALIDATION_ERROR, "Email and password are required", 400);
+    }
+
+    // Enhanced email validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, emailValidation.error || "Invalid email", 400);
     }
 
     // Normalize email
@@ -24,51 +43,17 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = await findUserByEmail(normalizedEmail);
     if (!user) {
-      console.log(`ERROR: Login failed: User not found for email: ${normalizedEmail}`);
-      console.log(`   Searching for: "${normalizedEmail}"`);
-      const allUsers = await loadUsers();
-      console.log(`   Available users in database: ${allUsers.length}`);
-      if (allUsers.length > 0) {
-        console.log(`   User emails: ${allUsers.map(u => `"${u.email}"`).join(", ")}`);
-      } else {
-        console.log(`   No users found in database - database may be empty or not connected`);
-      }
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      // Don't reveal if user exists or not (security best practice)
+      logWarn("Login attempt failed: user not found", { email: normalizedEmail });
+      throw createError(ErrorType.AUTH_ERROR, "Invalid email or password", 401);
     }
-
-    console.log(`User found: ${user.email} (ID: ${user.id})`);
-    console.log(`   Password hash exists: ${!!user.passwordHash}`);
-    console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
 
     // Verify password
-    let isValid: boolean;
-    try {
-      console.log(`   Verifying password for user: ${user.email}`);
-      console.log(`   Password hash exists: ${!!user.passwordHash}`);
-      console.log(`   Password hash length: ${user.passwordHash?.length || 0}`);
-      isValid = await verifyPassword(password, user.passwordHash);
-      console.log(`   Password verification result: ${isValid ? "✅ Valid" : "❌ Invalid"}`);
-    } catch (error) {
-      console.error("Password verification error:", error);
-      return NextResponse.json(
-        { error: "Failed to verify password. Please try again." },
-        { status: 500 }
-      );
-    }
-
+    const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
-      console.log(`ERROR: Login failed: Invalid password for email: ${normalizedEmail}`);
-      console.log(`   User exists but password does not match`);
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      logWarn("Login attempt failed: invalid password", { userId: user.id, email: normalizedEmail });
+      throw createError(ErrorType.AUTH_ERROR, "Invalid email or password", 401);
     }
-
-    console.log(`Login successful for user: ${user.email}`);
 
     // Generate token
     const token = generateToken({
@@ -76,6 +61,11 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       createdAt: user.createdAt,
+    });
+
+    // Log successful login
+    logUserActivity(user.id, "user_logged_in", {
+      email: user.email,
     });
 
     // Return user (without password) and token
@@ -101,23 +91,9 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
-    console.log(`Cookie set for user: ${user.email}`);
     return response;
   } catch (error) {
-    console.error("Login error:", error);
-    
-    // Handle JWT_SECRET configuration errors
-    if (error instanceof Error && error.message.includes("JWT_SECRET")) {
-      return NextResponse.json(
-        { error: "Server configuration error. Please contact support." },
-        { status: 500 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: "Failed to login. Please try again." },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 

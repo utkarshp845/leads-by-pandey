@@ -1,11 +1,14 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 import { User, UserWithPassword } from "./types";
+import { validatePassword } from "./validation";
+import { logError, logWarn } from "./logger";
 
 // In production, this MUST be set via environment variable
 // For development, use a default secret if not provided
 const JWT_SECRET = process.env.JWT_SECRET || "dev-secret-key-change-in-production-do-not-use-in-production";
 const JWT_EXPIRES_IN = "7d";
+const BCRYPT_ROUNDS = 12; // Increased from 10 for better security
 
 // Warn if using default secret in production
 if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
@@ -13,10 +16,21 @@ if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
 }
 
 /**
- * Hash a password
+ * Hash a password with enhanced security
  */
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  // Validate password strength before hashing
+  const validation = validatePassword(password);
+  if (!validation.valid) {
+    throw new Error(validation.error || "Invalid password");
+  }
+
+  try {
+    return await bcrypt.hash(password, BCRYPT_ROUNDS);
+  } catch (error) {
+    logError("Password hashing failed", error instanceof Error ? error : new Error(String(error)));
+    throw new Error("Failed to hash password");
+  }
 }
 
 /**

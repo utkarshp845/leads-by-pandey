@@ -1,44 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { createUser, findUserByEmail } from "@/lib/db-supabase";
+import { validateEmail, validatePassword, validateName, validateRequestBodySize } from "@/lib/validation";
+import { handleError, createError, ErrorType } from "@/lib/error-handler";
+import { logUserActivity } from "@/lib/logger";
+import { rateLimiters } from "@/lib/rate-limit";
 
 // Mark route as dynamic to allow cookie access
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResult = rateLimiters.registration(request);
+    if (!rateLimitResult.allowed && rateLimitResult.response) {
+      return rateLimitResult.response;
+    }
+
+    // Validate request body size
     const body = await request.json();
+    const sizeCheck = validateRequestBodySize(body, 10000); // 10KB max
+    if (!sizeCheck.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, sizeCheck.error || "Request too large", 413);
+    }
+
     const { email, name, password } = body;
 
     // Validation
     if (!email || !name || !password) {
-      return NextResponse.json(
-        { error: "Email, name, and password are required" },
-        { status: 400 }
-      );
+      throw createError(ErrorType.VALIDATION_ERROR, "Email, name, and password are required", 400);
     }
 
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Please enter a valid email address" },
-        { status: 400 }
-      );
+    // Enhanced validation
+    const emailValidation = validateEmail(email);
+    if (!emailValidation.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, emailValidation.error || "Invalid email", 400);
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, passwordValidation.error || "Invalid password", 400);
     }
 
-    if (name.trim().length < 2) {
-      return NextResponse.json(
-        { error: "Name must be at least 2 characters" },
-        { status: 400 }
-      );
+    const nameValidation = validateName(name);
+    if (!nameValidation.valid) {
+      throw createError(ErrorType.VALIDATION_ERROR, nameValidation.error || "Invalid name", 400);
     }
 
     // Normalize email first
@@ -47,48 +53,25 @@ export async function POST(request: NextRequest) {
     // Check if user already exists (using normalized email)
     const existingUser = await findUserByEmail(normalizedEmail);
     if (existingUser) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 409 }
-      );
+      throw createError(ErrorType.USER_ERROR, "User with this email already exists", 409);
     }
 
     // Hash password and create user
-    let passwordHash: string;
-    try {
-      passwordHash = await hashPassword(password);
-      console.log("Password hashed successfully");
-    } catch (error) {
-      console.error("Password hashing error:", error);
-      throw new Error("Failed to process password");
-    }
-
-    let userWithPassword: Awaited<ReturnType<typeof createUser>>;
-    try {
-      userWithPassword = await createUser(normalizedEmail, name.trim(), passwordHash);
-      console.log(`User created in database: ${userWithPassword.email} (ID: ${userWithPassword.id})`);
-    } catch (error) {
-      console.error("User creation error:", error);
-      if (error instanceof Error && error.message.includes("already exists")) {
-        throw error;
-      }
-      throw new Error("Failed to create user account");
-    }
+    const passwordHash = await hashPassword(password);
+    const userWithPassword = await createUser(normalizedEmail, name.trim(), passwordHash);
 
     // Generate token
-    let token: string;
-    try {
-      token = generateToken({
-        id: userWithPassword.id,
-        email: userWithPassword.email,
-        name: userWithPassword.name,
-        createdAt: userWithPassword.createdAt,
-      });
-    } catch (tokenError) {
-      console.error("Token generation error:", tokenError);
-      // If token generation fails, still create the user but return error
-      throw tokenError;
-    }
+    const token = generateToken({
+      id: userWithPassword.id,
+      email: userWithPassword.email,
+      name: userWithPassword.name,
+      createdAt: userWithPassword.createdAt,
+    });
+
+    // Log user activity
+    logUserActivity(userWithPassword.id, "user_registered", {
+      email: userWithPassword.email,
+    });
 
     // Return user (without password) and token
     const response = NextResponse.json(
@@ -113,34 +96,9 @@ export async function POST(request: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
-    console.log(`Cookie set for new user: ${userWithPassword.email}`);
     return response;
   } catch (error) {
-    console.error("Registration error:", error);
-    
-    if (error instanceof Error && error.message.includes("already exists")) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 409 }
-      );
-    }
-    
-    // Handle JWT_SECRET configuration errors
-    if (error instanceof Error && error.message.includes("JWT_SECRET")) {
-      console.error("JWT_SECRET configuration error:", error.message);
-      return NextResponse.json(
-        { 
-          error: "Server configuration error. JWT_SECRET is not set. Please configure it in your environment variables.",
-          details: process.env.NODE_ENV !== "production" ? error.message : undefined
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: "Failed to create account. Please try again." },
-      { status: 500 }
-    );
+    return handleError(error);
   }
 }
 
