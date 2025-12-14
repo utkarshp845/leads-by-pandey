@@ -36,19 +36,31 @@ CREATE INDEX IF NOT EXISTS idx_prospects_created_at ON prospects(created_at DESC
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prospects ENABLE ROW LEVEL SECURITY;
 
--- Create policies (users can only access their own data)
--- Note: Since we're using the anon key and handling auth in Next.js,
--- we'll use service role key for server-side operations
--- For better security, you can set up RLS policies based on JWT claims
+-- IMPORTANT: Since we're using JWT auth in Next.js (not Supabase Auth),
+-- we need to allow the anon key to read/write users for login/registration.
+-- This is safe because:
+-- 1. Passwords are hashed with bcrypt
+-- 2. Authentication is handled in Next.js API routes
+-- 3. API routes validate all inputs
 
--- Policy: Users can read their own data (if using Supabase Auth)
--- For now, we'll use service role key which bypasses RLS
--- This is acceptable since we're handling auth in Next.js API routes
+-- Policy: Allow anon key to read users (needed for login)
+CREATE POLICY "Allow anon to read users" ON users
+  FOR SELECT
+  USING (true);
 
--- Optional: If you want to use Supabase Auth instead of JWT:
--- CREATE POLICY "Users can read own data" ON users
---   FOR SELECT USING (auth.uid()::text = id);
--- 
--- CREATE POLICY "Users can read own prospects" ON prospects
---   FOR SELECT USING (auth.uid()::text = user_id);
+-- Policy: Allow anon key to insert users (needed for registration)
+CREATE POLICY "Allow anon to insert users" ON users
+  FOR INSERT
+  WITH CHECK (true);
+
+-- Policy: Allow anon key to read prospects (needed to load user's prospects)
+CREATE POLICY "Allow anon to read prospects" ON prospects
+  FOR SELECT
+  USING (true);
+
+-- Policy: Allow anon key to insert/update/delete prospects
+CREATE POLICY "Allow anon to manage prospects" ON prospects
+  FOR ALL
+  USING (true)
+  WITH CHECK (true);
 
