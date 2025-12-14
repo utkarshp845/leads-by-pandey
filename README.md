@@ -1,4 +1,4 @@
-# Leads by Pandey
+# Leads by Pandey Solutions
 
 A professional lead generation strategy tool powered by AI. Generate personalized 5-piece strategies for your prospects with Mr. Pandey, your AI sales mentor.
 

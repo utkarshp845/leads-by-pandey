@@ -382,28 +382,28 @@ export default function Home() {
                 <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-yellow-500 mb-0.5 leading-tight tracking-tight">
                   Leads
                 </h1>
-                <p className="text-sm md:text-base text-gray-400 font-medium -mt-1 tracking-wide">
-                  by Pandey
+                <p className="text-xs md:text-sm text-gray-400 font-normal -mt-1 tracking-wide">
+                  by Pandey Solutions
                 </p>
                 <p className="text-gray-400 text-xs md:text-sm mt-2 font-light">
-                  AI-powered lead generation strategies
+                  Professional lead generation strategies powered by AI
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {isSaving && (
-                <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700">
+                <div className="flex items-center gap-2 text-xs text-gray-400 bg-gray-800/60 px-3 py-1.5 rounded-lg border border-gray-700/50 backdrop-blur-sm">
                   <div className="h-3 w-3 border-2 border-gray-600 border-t-yellow-500 rounded-full animate-spin"></div>
                   <span>Saving...</span>
                 </div>
               )}
-              <div className="text-right hidden sm:block bg-gray-800/50 px-4 py-2 rounded-lg border border-gray-700">
+              <div className="text-right hidden sm:block bg-gray-800/60 px-4 py-2 rounded-lg border border-gray-700/50 backdrop-blur-sm">
                 <p className="text-sm font-semibold text-yellow-500">{user.name}</p>
                 <p className="text-xs text-gray-400 truncate max-w-[150px]">{user.email}</p>
               </div>
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800 rounded-lg transition-all whitespace-nowrap border border-gray-700 hover:border-yellow-500/50"
+                className="px-4 py-2 text-sm font-medium text-gray-300 hover:text-yellow-500 hover:bg-gray-800/60 rounded-lg transition-all whitespace-nowrap border border-gray-700/50 hover:border-yellow-500/50 backdrop-blur-sm"
                 aria-label="Logout"
               >
                 Logout

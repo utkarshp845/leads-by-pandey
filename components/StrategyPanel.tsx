@@ -33,7 +33,7 @@ function StrategyPanel({
             Ready to generate your strategy
           </p>
           <p className="text-gray-400 text-sm mt-2">
-            Enter prospect details and click "Ask Mr. Pandey" to get started
+            Enter prospect details and click "Ask Mr. Pandey" to generate your strategy
           </p>
         </div>
       </div>
@@ -46,8 +46,8 @@ function StrategyPanel({
       <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-xl border border-gray-700/50 p-8 h-full flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-gray-700 border-t-yellow-500 mb-6"></div>
-          <p className="text-yellow-500 text-lg font-medium">Mr. Pandey is analyzing...</p>
-          <p className="text-gray-400 text-sm mt-2">Crafting your personalized strategy</p>
+          <p className="text-yellow-500 text-lg font-medium">Analyzing prospect information...</p>
+          <p className="text-gray-400 text-sm mt-2">Generating your personalized lead generation strategy</p>
         </div>
       </div>
     );

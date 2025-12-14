@@ -95,7 +95,7 @@ export async function findUserByEmail(email: string): Promise<UserWithPassword |
 
   try {
     const normalizedEmail = email.toLowerCase().trim();
-    console.log(`🔍 Searching for user in Supabase: "${normalizedEmail}"`);
+    console.log(`Searching for user in Supabase: "${normalizedEmail}"`);
     
     const { data, error } = await supabase!
       .from('users')

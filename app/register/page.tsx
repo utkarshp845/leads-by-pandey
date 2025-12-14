@@ -51,7 +51,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        <div className="bg-gradient-to-br from-gray-800/95 to-gray-900/95 backdrop-blur-sm rounded-xl shadow-2xl border border-gray-700/50 p-8 lg:p-10">
+        <div className="bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-md rounded-2xl shadow-2xl border border-gray-700/50 p-8 lg:p-10">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-flex h-16 w-16 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 items-center justify-center shadow-lg shadow-yellow-500/50 mb-4">
@@ -60,9 +60,9 @@ export default function RegisterPage() {
               </svg>
             </div>
             <h1 className="text-4xl font-bold text-yellow-500 mb-1 leading-tight">Leads</h1>
-            <p className="text-sm text-gray-400 font-medium mb-4">by Pandey</p>
+            <p className="text-xs text-gray-400 font-normal mb-4">by Pandey Solutions</p>
             <h2 className="text-xl font-semibold text-gray-200 mb-2">Create Account</h2>
-            <p className="text-gray-400 text-sm">Get started with AI-powered lead generation</p>
+            <p className="text-gray-400 text-sm">Get started with professional lead generation strategies</p>
           </div>
 
           {/* Error Message */}

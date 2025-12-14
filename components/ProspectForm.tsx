@@ -68,8 +68,8 @@ function ProspectForm({
             <h2 className="text-2xl font-bold text-yellow-500 tracking-tight">
               Prospect Details
             </h2>
-            <p className="text-xs text-gray-300 font-medium">
-              Enter information to generate your strategy
+            <p className="text-xs text-gray-400 font-normal">
+              Enter prospect information to generate your strategy
             </p>
           </div>
         </div>

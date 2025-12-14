@@ -31,26 +31,26 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Custom scrollbar - more professional */
+/* Custom scrollbar - professional and subtle */
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #111827;
-  border-radius: 6px;
+  background: #0f172a;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 6px;
-  border: 2px solid #111827;
+  background: #334155;
+  border-radius: 4px;
+  border: 1px solid #0f172a;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
+  background: #475569;
 }
 
 /* Focus styles for accessibility */

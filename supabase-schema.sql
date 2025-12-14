@@ -1,4 +1,4 @@
--- Supabase Database Schema for Leads by Pandey
+-- Supabase Database Schema for Leads by Pandey Solutions
 -- Run this in your Supabase SQL Editor
 
 -- Create users table
